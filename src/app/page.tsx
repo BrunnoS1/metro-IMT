@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Button from '@/app/components/botaoteste'
-
+import routes from '../routes';
+import Button from './components/botaoteste';
 
 export default function Login() {
   const router = useRouter()
@@ -34,7 +34,7 @@ export default function Login() {
         localStorage.setItem('metro_user', JSON.stringify(data.user))
         
         // Redireciona para a página de teste
-        router.push('/teste')
+        router.push(routes.homePage)
       } else {
         setError(data.error || 'Erro no login')
       }
@@ -124,7 +124,7 @@ export default function Login() {
             <Button 
               type="submit" 
               variant="primary" 
-              className="w-full flex justify-center py-3 px-4 text-lg font-semibold"
+              className="w-full flex justify-center py-3 px-4 text-lg font-semibold cursor-pointer"
               disabled={loading}
             >
               {loading ? (
