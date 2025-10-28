@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import routes from '../../routes'
+import WorksiteSelect from '../../components/WorksiteSelect';
 
 const worksites = [
   { id: 1, name: 'Vila Sônia' },
@@ -62,7 +63,7 @@ export default function HomePage() {
             <span className="text-white text-3xl">🚇</span>
           </div>
           <h1 className="text-4xl font-bold text-[#001489] mb-2">
-            Página de Teste
+            Monitoramento Inteligente - Metrô SP
           </h1>
           <p className="text-gray-600 text-lg">
             Bem-vindo ao sistema do Metrô SP
@@ -88,25 +89,7 @@ export default function HomePage() {
               <label htmlFor="worksite" className="text-lg font-medium text-[#001489]">
                 Observando a obra:
               </label>
-
-              <select
-                id="worksite"
-                value={selectedWorksite}
-                onChange={(e) => setSelectedWorksite(e.target.value)}
-                className="w-64 p-2 border border-blue-200 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold font-sans"
-                style={{ fontFamily: 'inherit', color: '#374151' }}
-              >
-                <option style={{ fontFamily: 'inherit' }} value="">
-                  Selecione uma obra
-                </option>
-                {worksites.map((site) => (
-                  <option key={site.id} value={site.id} style={{ fontFamily: 'inherit' }}>
-                    {site.name}
-                  </option>
-                ))}
-              </select>
-
-
+              <WorksiteSelect />
             </div>
           </div>
 
@@ -119,24 +102,37 @@ export default function HomePage() {
               <p className="text-sm text-gray-600">Veja a linha do tempo da construção</p>
             </Link>
 
-            <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
-              <h3 className="font-semibold text-[#001489] mb-2">Funcionalidade 2</h3>
-              <p className="text-sm text-gray-600">Descrição da segunda funcionalidade</p>
-            </div>
+            <Link
+              href={routes.enviarFotosPage}
+              className="bg-blue-50 p-6 rounded-lg border border-blue-200 block"
+            >
+              <h3 className="font-semibold text-[#001489] mb-2">Enviar fotos</h3>
+              <p className="text-sm text-gray-600">Escolha a obra e envie fotos da construção por aqui</p>
+            </Link>
 
-            <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
-              <h3 className="font-semibold text-[#001489] mb-2">Funcionalidade 3</h3>
-              <p className="text-sm text-gray-600">Descrição da terceira funcionalidade</p>
-            </div>
+            <Link
+              href={routes.enviarBIMPage}
+              className="bg-blue-50 p-6 rounded-lg border border-blue-200 block"
+            >
+              <h3 className="font-semibold text-[#001489] mb-2">Enviar BIM</h3>
+              <p className="text-sm text-gray-600">Envie o projeto BIM da construção</p>
+            </Link>
           </div>
 
-          <div className="text-center">
+          <div className="text-center flex flex-col gap-4">
+            <button
+              onClick={() => router.push(routes.gerenciarObrasPage)}
+              className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors shadow-lg hover:shadow-xl cursor-pointer"
+            >
+              Gerenciar Obras
+            </button>
             <button
               onClick={handleLogout}
               className="bg-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors shadow-lg hover:shadow-xl cursor-pointer"
             >
               Sair do Sistema
             </button>
+            <div className="h-4"></div> {/* Espaço entre os botões */}
           </div>
         </div>
 
