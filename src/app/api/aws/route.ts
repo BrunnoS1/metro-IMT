@@ -60,6 +60,52 @@ export async function POST(req: Request) {
   }
 }
 
+export async function GET(req: Request) {
+  try {
+    const url = new URL(req.url);
+    const worksite = url.searchParams.get('worksite');
+
+    if (!worksite) {
+      return NextResponse.json(
+        { error: 'Obra não fornecida.' },
+        { status: 400 }
+      );
+    }
+
+    if (!bucketName) {
+      return NextResponse.json(
+        { error: 'O nome do bucket não está configurado.' },
+        { status: 500 }
+      );
+    }
+
+    const params = {
+      Bucket: bucketName,
+      Prefix: `obras/${worksite}/fotos/`,
+    };
+
+    const data = await s3.listObjectsV2(params).promise();
+
+    const sortedFiles = (data.Contents || [])
+      .sort((a, b) => ((a.LastModified ? a.LastModified.getTime() : 0) - (b.LastModified ? b.LastModified.getTime() : 0)))
+      .map((file) => ({
+        key: file.Key,
+        url: `https://${bucketName}.s3.${process.env.NEXT_PUBLIC_AWS_REGION}.amazonaws.com/${file.Key}`,
+        lastModified: file.LastModified,
+      }));
+
+    return NextResponse.json(sortedFiles);
+  } catch (error) {
+    console.error('Erro ao listar os objetos:', error);
+
+    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+    return NextResponse.json(
+      { error: 'Erro ao listar os objetos no S3.', details: errorMessage },
+      { status: 500 }
+    );
+  }
+}
+
 export const config = {
   runtime: 'nodejs', // Ensure the route runs in the Node.js runtime
 };

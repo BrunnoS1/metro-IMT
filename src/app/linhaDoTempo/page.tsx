@@ -2,22 +2,48 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import routes from '../../routes';
 import { useWorksite } from '../../context/WorksiteContext';
+import Item from '../components/item';
 
-const timelineData = [
-  { date: '2023-01-01', image: '/images/img1.png', description: 'Descrição do evento 1' },
-  { date: '2023-02-15', image: '/images/img2.png', description: 'Descrição do evento 2' },
-  { date: '2023-03-10', image: '/images/img3.png', description: 'Descrição do evento 3' },
-  { date: '2023-04-20', image: '/images/img4.png', description: 'Descrição do evento 4' },
-  { date: '2023-05-05', image: '/images/img5.png', description: 'Descrição do evento 5' },
-  { date: '2023-05-15', image: '/images/img6.png', description: 'Descrição do evento 6' },
-];
+interface TimelineItem {
+  date: string;
+  image: string;
+  description: string;
+}
 
 export default function LinhaDoTempoPage() {
   const { selectedWorksite } = useWorksite();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [timelineData, setTimelineData] = useState<TimelineItem[]>([]);
+
+  useEffect(() => {
+    const fetchTimelineData = async () => {
+      if (!selectedWorksite) return;
+
+      try {
+        const response = await fetch(`/api/aws?worksite=${selectedWorksite}`);
+        const data: { lastModified: string; url: string }[] = await response.json();
+
+        if (response.ok) {
+          setTimelineData(
+            data.map((item) => ({
+              date: item.lastModified,
+              image: item.url,
+              description: `Imagem enviada em ${new Date(item.lastModified).toLocaleDateString()}`,
+            }))
+          );
+        } else {
+          console.error('Erro ao buscar os dados da linha do tempo:', data);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar os dados da linha do tempo:', error);
+      }
+    };
+
+    fetchTimelineData();
+  }, [selectedWorksite]);
 
   const handleNext = () => {
     setCurrentIndex((prevIndex) => (prevIndex + 1) % timelineData.length);
@@ -55,28 +81,7 @@ export default function LinhaDoTempoPage() {
               }}
             >
               {timelineData.map((item, index) => (
-                <div
-                  key={index}
-                  className="flex-shrink-0 w-full p-4"
-                  style={{ minWidth: '100%' }}
-                >
-                  <div className="bg-white rounded-lg shadow-md p-4">
-                    <div className="aspect-[4/3] relative overflow-hidden rounded-md mb-4">
-                      <Image
-                        src={item.image}
-                        alt={`Imagem do evento ${index + 1}`}
-                        fill
-                        sizes="(max-width: 256px) 100vw, 256px"
-                        style={{ objectFit: 'cover' }}
-                        className="rounded-md"
-                      />
-                    </div>
-                    <h3 className="text-lg font-semibold text-[#001489] mb-2">
-                      {item.date}
-                    </h3>
-                    <p className="text-sm text-gray-600">{item.description}</p>
-                  </div>
-                </div>
+                <Item key={index} item={item} />
               ))}
             </div>
           </div>

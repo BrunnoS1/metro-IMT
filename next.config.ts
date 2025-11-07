@@ -1,12 +1,10 @@
-import type { NextConfig } from 'next'
+import { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  experimental: {
-    reactCompiler: true  // Opcional: React Compiler
-  },
+  reactStrictMode: true,
   images: {
-    domains: ['exemplo.com'],
+    domains: [process.env.NEXT_PUBLIC_AWS_S3_BUCKET_NAME + '.s3.' + process.env.NEXT_PUBLIC_AWS_REGION + '.amazonaws.com'],
   },
-}
+};
 
-export default nextConfig
+export default nextConfig;
