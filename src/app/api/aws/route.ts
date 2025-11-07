@@ -31,15 +31,17 @@ export async function POST(req: Request) {
       );
     }
 
-    // Generate a unique file name
-    const fileExtension = image.name.split('.').pop(); // Extract file extension
-    const baseFileName = image.name.replace(/\.[^/.]+$/, ''); // Remove extension from file name
-    const uniqueSuffix = uuidv4().slice(0, 4); // Get 4 random characters from UUID
-    const uniqueFileName = `${baseFileName}${uniqueSuffix}.${fileExtension}`;
+    // garante um nome unico pro arquivo
+    // gera um sufixo unico com 4 digitos de um uuid
+    // ex: fotos.jpeg -> fotos_ab12.jpeg
+    const fileExtension = image.name.split('.').pop();
+    const baseFileName = image.name.replace(/\.[^/.]+$/, '');
+    const uniqueSuffix = uuidv4().slice(0, 4);
+    const uniqueFileName = `${baseFileName}_${uniqueSuffix}.${fileExtension}`;
 
     const params = {
       Bucket: bucketName,
-      Key: `obras/${worksite}/${uniqueFileName}`, // Updated file path
+      Key: `obras/${worksite}/fotos/${uniqueFileName}`,
       Body: Buffer.from(await image.arrayBuffer()),
       ContentType: image.type,
     };
