@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import routes from '../../routes';
 import WorksiteSelect from '../../components/WorksiteSelect';
 import { useWorksite } from '../../context/WorksiteContext';
-import AWS from 'aws-sdk'; // Import AWS SDK
 
 export default function EnviarFotosPage() {
   const router = useRouter();
@@ -29,33 +28,23 @@ export default function EnviarFotosPage() {
       return;
     }
 
-    // Configure AWS S3
-    AWS.config.update({
-      accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID,
-      secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY,
-      region: process.env.NEXT_PUBLIC_AWS_REGION,
-    });
-
-    const s3 = new AWS.S3();
-    const bucketName = process.env.NEXT_PUBLIC_AWS_S3_BUCKET_NAME;
-
-    console.log('Bucket Name:', bucketName)
-
-    if (!bucketName) {
-      alert('O nome do bucket S3 não está configurado corretamente.');
-      return;
-    }
-
-    const params = {
-      Bucket: bucketName,
-      Key: `${selectedWorksite}/${image.name}`,
-      Body: image,
-      ContentType: image.type,
-    };
+    const formData = new FormData();
+    formData.append('worksite', selectedWorksite);
+    formData.append('image', image);
 
     try {
-      await s3.upload(params).promise();
-      alert(`Imagem para a obra "${selectedWorksite}" foi enviada com sucesso!`);
+      const response = await fetch('/api/aws', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        alert(`Imagem para a obra "${selectedWorksite}" foi enviada com sucesso!`);
+      } else {
+        const errorData = await response.json();
+        console.error('Erro ao enviar a imagem:', errorData);
+        alert('Ocorreu um erro ao enviar a imagem. Tente novamente.');
+      }
     } catch (error) {
       console.error('Erro ao enviar a imagem:', error);
       alert('Ocorreu um erro ao enviar a imagem. Tente novamente.');
