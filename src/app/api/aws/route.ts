@@ -15,11 +15,12 @@ export async function POST(req: Request) {
   try {
     const formData = await req.formData();
     const worksite = formData.get('worksite') as string;
-    const image = formData.get('image') as File;
+    const fileType = formData.get('type') as string;
+    const file = formData.get('file') as File;
 
-    if (!worksite || !image) {
+    if (!worksite || !file || !fileType) {
       return NextResponse.json(
-        { error: 'Obra ou imagem não fornecida.' },
+        { error: 'Obra, tipo ou arquivo não fornecido.' },
         { status: 400 }
       );
     }
@@ -33,17 +34,16 @@ export async function POST(req: Request) {
 
     // garante um nome unico pro arquivo
     // gera um sufixo unico com 4 digitos de um uuid
-    // ex: fotos.jpeg -> fotos_ab12.jpeg
-    const fileExtension = image.name.split('.').pop();
-    const baseFileName = image.name.replace(/\.[^/.]+$/, '');
+    const fileExtension = file.name.split('.').pop();
+    const baseFileName = file.name.replace(/\.[^/.]+$/, '');
     const uniqueSuffix = uuidv4().slice(0, 4);
     const uniqueFileName = `${baseFileName}_${uniqueSuffix}.${fileExtension}`;
 
     const params = {
       Bucket: bucketName,
-      Key: `obras/${worksite}/fotos/${uniqueFileName}`,
-      Body: Buffer.from(await image.arrayBuffer()),
-      ContentType: image.type,
+      Key: `obras/${worksite}/${fileType}/${uniqueFileName}`,
+      Body: Buffer.from(await file.arrayBuffer()),
+      ContentType: file.type,
     };
 
     await s3.upload(params).promise();
@@ -64,6 +64,7 @@ export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
     const worksite = url.searchParams.get('worksite');
+    const type = url.searchParams.get('type') || 'photos';
 
     if (!worksite) {
       return NextResponse.json(
@@ -79,9 +80,10 @@ export async function GET(req: Request) {
       );
     }
 
+    const folder = type === 'bim' ? 'modeloBIM' : 'fotos';
     const params = {
       Bucket: bucketName,
-      Prefix: `obras/${worksite}/fotos/`,
+      Prefix: `obras/${worksite}/${folder}/`,
     };
 
     const data = await s3.listObjectsV2(params).promise();

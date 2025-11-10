@@ -17,12 +17,34 @@ export default function EnviarBIMPage() {
     }
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!selectedWorksite || !bimFile) {
       alert('Por favor, selecione uma obra e adicione um arquivo BIM.');
       return;
     }
-    alert(`Arquivo BIM para a obra "${selectedWorksite}" foi confirmado!`);
+
+    const formData = new FormData();
+    formData.append('worksite', selectedWorksite);
+    formData.append('file', bimFile);
+    formData.append('type', 'modeloBIM');
+
+    try {
+      const response = await fetch('/api/aws', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        alert(`Arquivo BIM para a obra "${selectedWorksite}" foi enviado com sucesso!`);
+      } else {
+        const errorData = await response.json();
+        console.error('Erro ao enviar o arquivo BIM:', errorData);
+        alert('Ocorreu um erro ao enviar o arquivo BIM. Tente novamente.');
+      }
+    } catch (error) {
+      console.error('Erro ao enviar o arquivo BIM:', error);
+      alert('Ocorreu um erro ao enviar o arquivo BIM. Tente novamente.');
+    }
   };
 
   return (

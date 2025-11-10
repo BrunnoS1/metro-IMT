@@ -23,16 +23,27 @@ export default function LinhaDoTempoPage() {
       if (!selectedWorksite) return;
 
       try {
-        const response = await fetch(`/api/aws?worksite=${selectedWorksite}`);
+        const response = await fetch(`/api/aws?worksite=${selectedWorksite}&type=fotos`);
         const data: { lastModified: string; url: string }[] = await response.json();
 
         if (response.ok) {
           setTimelineData(
-            data.map((item) => ({
-              date: item.lastModified,
-              image: item.url,
-              description: `Imagem enviada em ${new Date(item.lastModified).toLocaleDateString()}`,
-            }))
+            data.map((item) => {
+              const date = new Date(item.lastModified);
+              const correctedDate = new Date(date.getTime()); // Add 3 hours
+              return {
+                date: correctedDate.toLocaleString('pt-BR', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  timeZone: 'America/Sao_Paulo'
+                }),
+                image: item.url,
+                description: `Imagem enviada em ${correctedDate.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`,
+              };
+            })
           );
         } else {
           console.error('Erro ao buscar os dados da linha do tempo:', data);
@@ -46,10 +57,12 @@ export default function LinhaDoTempoPage() {
   }, [selectedWorksite]);
 
   const handleNext = () => {
+    if (timelineData.length === 0) return;
     setCurrentIndex((prevIndex) => (prevIndex + 1) % timelineData.length);
   };
 
   const handlePrev = () => {
+    if (timelineData.length === 0) return;
     setCurrentIndex((prevIndex) =>
       (prevIndex - 1 + timelineData.length) % timelineData.length
     );
@@ -73,6 +86,11 @@ export default function LinhaDoTempoPage() {
 
         {/* Carousel */}
         <div className="relative">
+          {timelineData.length === 0 && (
+            <div className="bg-white rounded-lg border border-blue-100 p-6 text-center text-gray-600">
+              Nenhuma foto encontrada para {selectedWorksite || 'esta obra'}.
+            </div>
+          )}
           <div className="overflow-hidden">
             <div
               className="flex transition-transform duration-500"
@@ -89,13 +107,15 @@ export default function LinhaDoTempoPage() {
           {/* Navigation Arrows */}
           <button
             onClick={handlePrev}
-            className="absolute top-1/2 left-0 transform -translate-y-1/2 bg-[#001489] text-white p-3 rounded-full shadow-lg hover:bg-[#001489]/90 transition"
+            className="absolute top-1/2 left-0 transform -translate-y-1/2 bg-[#001489] text-white p-3 rounded-full shadow-lg hover:bg-[#001489]/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={timelineData.length <= 1}
           >
             &#8592;
           </button>
           <button
             onClick={handleNext}
-            className="absolute top-1/2 right-0 transform -translate-y-1/2 bg-[#001489] text-white p-3 rounded-full shadow-lg hover:bg-[#001489]/90 transition"
+            className="absolute top-1/2 right-0 transform -translate-y-1/2 bg-[#001489] text-white p-3 rounded-full shadow-lg hover:bg-[#001489]/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={timelineData.length <= 1}
           >
             &#8594;
           </button>

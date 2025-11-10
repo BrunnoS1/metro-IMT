@@ -23,6 +23,7 @@ export default function HomePage() {
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
   const [selectedWorksite, setSelectedWorksite] = useState('')
+  const [loadingBIM, setLoadingBIM] = useState(false)
 
   useEffect(() => {
     // Verifica se o usuário está logado
@@ -117,6 +118,19 @@ export default function HomePage() {
               <h3 className="font-semibold text-[#001489] mb-2">Enviar BIM</h3>
               <p className="text-sm text-gray-600">Envie o projeto BIM da construção</p>
             </Link>
+
+            <Link
+              href={routes.visualizarBIMPage}
+              onClick={(e) => {
+                e.preventDefault();
+                setLoadingBIM(true);
+                router.push(routes.visualizarBIMPage);
+              }}
+              className="bg-blue-50 p-6 rounded-lg border border-blue-200 block hover:bg-blue-100 transition-colors"
+            >
+              <h3 className="font-semibold text-[#001489] mb-2">Visualizar BIM</h3>
+              <p className="text-sm text-gray-600">Veja o projeto BIM da construção</p>
+            </Link>
           </div>
 
           <div className="text-center flex flex-col gap-4">
@@ -141,6 +155,17 @@ export default function HomePage() {
           <p>© {new Date().getFullYear()} Metrô São Paulo - Sistema de Teste</p>
         </div>
       </div>
+
+      {/* Loading Toast */}
+      {loadingBIM && (
+        <div className="fixed bottom-8 right-8 bg-[#001489] text-white px-6 py-4 rounded-lg shadow-2xl flex items-center gap-3 animate-slide-up z-50">
+          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+          <div>
+            <p className="font-semibold">Carregando Visualizador BIM</p>
+            <p className="text-sm text-blue-200">Aguarde, isso pode levar alguns segundos...</p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

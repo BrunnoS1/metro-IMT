@@ -30,7 +30,8 @@ export default function EnviarFotosPage() {
 
     const formData = new FormData();
     formData.append('worksite', selectedWorksite);
-    formData.append('image', image);
+    formData.append('file', image);
+    formData.append('type', 'fotos');
 
     try {
       const response = await fetch('/api/aws', {

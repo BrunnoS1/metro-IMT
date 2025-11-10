@@ -7,6 +7,7 @@ const routes = {
   enviarFotosPage: '/enviarFotos',
   enviarBIMPage: '/enviarBIM',
   gerenciarObrasPage: '/gerenciarObras',
+  visualizarBIMPage: '/visualizarBIM',
 };
 
 export default routes;
