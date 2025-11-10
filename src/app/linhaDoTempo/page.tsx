@@ -1,110 +1,66 @@
-'use client';
 
-import Link from 'next/link';
-import Image from 'next/image';
-import { useState } from 'react';
-import routes from '../../routes';
-import { useWorksite } from '../../context/WorksiteContext';
 
-const timelineData = [
-  { date: '2023-01-01', image: '/images/img1.png', description: 'Descrição do evento 1' },
-  { date: '2023-02-15', image: '/images/img2.png', description: 'Descrição do evento 2' },
-  { date: '2023-03-10', image: '/images/img3.png', description: 'Descrição do evento 3' },
-  { date: '2023-04-20', image: '/images/img4.png', description: 'Descrição do evento 4' },
-  { date: '2023-05-05', image: '/images/img5.png', description: 'Descrição do evento 5' },
-  { date: '2023-05-15', image: '/images/img6.png', description: 'Descrição do evento 6' },
-];
+// <<< DADOS DO LADO DO SERVIDOR >>>
+
+import TimelineClient from "./components/TimeLineClient";
+
+// (No futuro, você faria um 'fetch' ou 'await' do seu banco de dados aqui)
+const getTimelineData = () => {
+  return [
+    {
+      date: '24 de Abril de 1968',
+      title: 'Fundação da Companhia do Metrô',
+      description:
+        'É fundada a Companhia do Metropolitano de São Paulo (Metrô), dando início oficial ao projeto de transporte subterrâneo da cidade.',
+      image: '/images/img1.png',
+    },
+    {
+      date: '14 de Setembro de 1974',
+      title: 'Início da Operação Comercial',
+      description:
+        'O primeiro trecho da Linha 1-Azul (Norte-Sul) é inaugurado, conectando as estações Jabaquara e Vila Mariana. Foi a primeira linha de metrô do Brasil.',
+      image: '/images/img2.png',
+    },
+    {
+      date: '10 de Março de 1979',
+      title: 'Inauguração da Linha 3-Vermelha',
+      description:
+        'Inicia-se a operação da Linha 3-Vermelha (Leste-Oeste), começando pelo trecho entre as estações Sé e Brás, expandindo a rede para a zona leste.',
+      image: '/images/img3.png',
+    },
+    {
+      date: '25 de Janeiro de 1991',
+      title: 'Nasce a Linha 2-Verde',
+      description:
+        'A Linha 2-Verde (Paulista) é inaugurada, inicialmente com o trecho entre Consolação e Paraíso, passando pela importante Avenida Paulista.',
+      image: '/images/img4.png',
+    },
+    {
+      date: '20 de Outubro de 2002',
+      title: 'Expansão com a Linha 5-Lilás',
+      description:
+        'A Linha 5-Lilás começa a operar, inicialmente como uma linha elevada de menor porte na Zona Sul, ligando Capão Redondo ao Largo Treze.',
+      image: '/images/img5.png',
+    },
+    {
+      date: '25 de Maio de 2010',
+      title: 'Inovação com a Linha 4-Amarela',
+      description:
+        'A Linha 4-Amarela é inaugurada, sendo a primeira da rede a ser operada pela iniciativa privada (ViaQuatro) e a primeira com trens "driverless" (sem condutor).',
+      image: '/images/img6.png',
+    },
+  ];
+};
 
 export default function LinhaDoTempoPage() {
-  const { selectedWorksite } = useWorksite();
-  const [currentIndex, setCurrentIndex] = useState(0);
+  // 1. Buscamos os dados no servidor.
+  const timelineData = getTimelineData();
 
-  const handleNext = () => {
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % timelineData.length);
-  };
-
-  const handlePrev = () => {
-    setCurrentIndex((prevIndex) =>
-      (prevIndex - 1 + timelineData.length) % timelineData.length
-    );
-  };
-
+  // 2. Renderizamos o layout estático (as divs de fundo e espaçamento).
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <div className="mx-auto h-20 w-20 bg-[#001489] rounded-full flex items-center justify-center mb-4 shadow-lg">
-            <span className="text-white text-3xl">🚇</span>
-          </div>
-          <h1 className="text-4xl font-bold text-[#001489] mb-2">
-            Linha do Tempo da Obra de {selectedWorksite || '...'}
-          </h1>
-          <p className="text-gray-600 text-lg">
-            Explore os eventos organizados por data
-          </p>
-        </div>
-
-        {/* Carousel */}
-        <div className="relative">
-          <div className="overflow-hidden">
-            <div
-              className="flex transition-transform duration-500"
-              style={{
-                transform: `translateX(-${currentIndex * 100}%)`,
-              }}
-            >
-              {timelineData.map((item, index) => (
-                <div
-                  key={index}
-                  className="flex-shrink-0 w-full p-4"
-                  style={{ minWidth: '100%' }}
-                >
-                  <div className="bg-white rounded-lg shadow-md p-4">
-                    <div className="aspect-[4/3] relative overflow-hidden rounded-md mb-4">
-                      <Image
-                        src={item.image}
-                        alt={`Imagem do evento ${index + 1}`}
-                        fill
-                        sizes="(max-width: 256px) 100vw, 256px"
-                        style={{ objectFit: 'cover' }}
-                        className="rounded-md"
-                      />
-                    </div>
-                    <h3 className="text-lg font-semibold text-[#001489] mb-2">
-                      {item.date}
-                    </h3>
-                    <p className="text-sm text-gray-600">{item.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Navigation Arrows */}
-          <button
-            onClick={handlePrev}
-            className="absolute top-1/2 left-0 transform -translate-y-1/2 bg-[#001489] text-white p-3 rounded-full shadow-lg hover:bg-[#001489]/90 transition"
-          >
-            &#8592;
-          </button>
-          <button
-            onClick={handleNext}
-            className="absolute top-1/2 right-0 transform -translate-y-1/2 bg-[#001489] text-white p-3 rounded-full shadow-lg hover:bg-[#001489]/90 transition"
-          >
-            &#8594;
-          </button>
-        </div>
-
-        {/* Back Button */}
-        <div className="text-center mt-8">
-          <Link
-            href={routes.homePage}
-            className="bg-[#001489] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#001367] transition-colors shadow-lg hover:shadow-xl"
-          >
-            Voltar para a Página Inicial
-          </Link>
-        </div>
+        <TimelineClient timelineData={timelineData} />
       </div>
     </div>
   );
