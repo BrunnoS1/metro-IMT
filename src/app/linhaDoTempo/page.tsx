@@ -23,7 +23,7 @@ export default function LinhaDoTempoPage() {
       if (!selectedWorksite) return;
 
       try {
-        const response = await fetch(`/api/aws?worksite=${selectedWorksite}&type=fotos`);
+        const response = await fetch(`/api/s3?worksite=${selectedWorksite}&type=fotos`);
         const data: { lastModified: string; url: string }[] = await response.json();
 
         if (response.ok) {

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import routes from '../../routes';
-import WorksiteSelect from '../../components/WorksiteSelect';
+import WorksiteSelect from '../components/worksiteselect';
 import { useWorksite } from '../../context/WorksiteContext';
 
 export default function EnviarBIMPage() {
@@ -29,7 +29,7 @@ export default function EnviarBIMPage() {
     formData.append('type', 'modeloBIM');
 
     try {
-      const response = await fetch('/api/aws', {
+      const response = await fetch('/api/s3', {
         method: 'POST',
         body: formData,
       });

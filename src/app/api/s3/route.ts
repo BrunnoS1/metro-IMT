@@ -98,16 +98,16 @@ export async function GET(req: Request) {
 
     return NextResponse.json(sortedFiles);
   } catch (error) {
-    console.error('Erro ao listar os objetos:', error);
+    console.error('Erro ao processar requisição:', error);
 
     const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
     return NextResponse.json(
-      { error: 'Erro ao listar os objetos no S3.', details: errorMessage },
+      { error: 'Erro ao processar requisição.', details: errorMessage },
       { status: 500 }
     );
   }
 }
 
 export const config = {
-  runtime: 'nodejs', // Ensure the route runs in the Node.js runtime
+  runtime: 'nodejs',
 };

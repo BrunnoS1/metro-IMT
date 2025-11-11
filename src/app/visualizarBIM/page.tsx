@@ -35,7 +35,7 @@ export default function VisualizarBIMPage() {
         }
 
         console.log('Fetching BIM for worksite:', selectedWorksite);
-        const response = await fetch(`/api/aws?worksite=${selectedWorksite}&type=bim`);
+        const response = await fetch(`/api/s3?worksite=${selectedWorksite}&type=bim`);
         console.log('Fetch completed, parsing JSON...');
         const data = await response.json();
         console.log('API response for BIM:', data);

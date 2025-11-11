@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import routes from '../../routes'
-import WorksiteSelect from '../../components/WorksiteSelect';
+import WorksiteSelect from '../components/worksiteselect';
 
 const worksites = [
   { id: 1, name: 'Vila Sônia' },
