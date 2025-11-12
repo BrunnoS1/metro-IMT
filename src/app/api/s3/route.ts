@@ -48,7 +48,11 @@ export async function POST(req: Request) {
 
     await s3.upload(params).promise();
 
-    return NextResponse.json({ message: 'Imagem enviada com sucesso!' });
+    return NextResponse.json({ 
+      message: 'Imagem enviada com sucesso!',
+      filename: uniqueFileName,
+      key: `obras/${worksite}/${fileType}/${uniqueFileName}`
+    });
   } catch (error) {
     console.error('Erro ao enviar a imagem:', error);
 
