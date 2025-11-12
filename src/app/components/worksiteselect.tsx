@@ -50,6 +50,13 @@ export default function worksiteselect() {
     fetchWorksites();
   }, []);
 
+  // Save selectedWorksite to sessionStorage whenever it changes
+  useEffect(() => {
+    if (selectedWorksite) {
+      sessionStorage.setItem('metro_worksite', selectedWorksite);
+    }
+  }, [selectedWorksite]);
+
   return (
     <div>
       <select
