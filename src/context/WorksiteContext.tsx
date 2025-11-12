@@ -1,7 +1,7 @@
 
 'use client';
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 interface WorksiteContextProps {
   selectedWorksite: string;
@@ -12,6 +12,15 @@ const WorksiteContext = createContext<WorksiteContextProps | undefined>(undefine
 
 export const WorksiteProvider = ({ children }: { children: ReactNode }) => {
   const [selectedWorksite, setSelectedWorksite] = useState('');
+
+  // Restore worksite from sessionStorage on mount (e.g., after page reload from delete)
+  useEffect(() => {
+    const savedWorksite = sessionStorage.getItem('metro_worksite_after_delete');
+    if (savedWorksite) {
+      setSelectedWorksite(savedWorksite);
+      sessionStorage.removeItem('metro_worksite_after_delete');
+    }
+  }, []);
 
   return (
     <WorksiteContext.Provider value={{ selectedWorksite, setSelectedWorksite }}>

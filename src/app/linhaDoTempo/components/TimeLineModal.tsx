@@ -2,14 +2,27 @@
 
 import { TimelineItem } from '@/types/types';
 import Image from 'next/image';
+import { useState } from 'react';
 
 interface TimelineModalProps {
   item: TimelineItem | null;
   onClose: () => void;
+  onDelete: (item: TimelineItem) => Promise<void>;
 }
 
-export default function TimelineModal({ item, onClose }: TimelineModalProps) {
+export default function TimelineModal({ item, onClose, onDelete }: TimelineModalProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
+  
   if (!item) return null;
+
+  const handleDeleteClick = async () => {
+    setIsDeleting(true);
+    try {
+      await onDelete(item);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <div
@@ -84,6 +97,17 @@ export default function TimelineModal({ item, onClose }: TimelineModalProps) {
               </p>
             </div>
           </div>
+        </div>
+
+        {/* --- FOOTER DO MODAL (Botão de Apagar) --- */}
+        <div className="flex justify-end p-6 border-t border-gray-100 bg-gray-50">
+          <button
+            onClick={handleDeleteClick}
+            disabled={isDeleting}
+            className="bg-red-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-red-700 transition-colors shadow-lg hover:shadow-xl disabled:bg-gray-400 disabled:cursor-not-allowed"
+          >
+            {isDeleting ? 'Apagando...' : 'Apagar Imagem'}
+          </button>
         </div>
       </div>
     </div>

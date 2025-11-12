@@ -35,6 +35,46 @@ export default function TimelineClient({ timelineData }: TimelineClientProps) {
     setSelectedItem(null);
   };
 
+  const handleDelete = async (item: TimelineItem) => {
+    const confirmed = window.confirm(
+      `Tem certeza que deseja apagar esta imagem?\n\n${item.title}\n${item.date}`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      // Extract the S3 key from the image URL
+      const url = new URL(item.image);
+      const key = url.pathname.substring(1); // Remove leading '/'
+
+      const response = await fetch('/api/s3', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ key }),
+      });
+
+      if (response.ok) {
+        alert('Imagem apagada com sucesso!');
+        handleCloseModal();
+        // Store the current worksite before reload to preserve selection
+        if (selectedWorksite) {
+          sessionStorage.setItem('metro_worksite_after_delete', selectedWorksite);
+        }
+        // Reload the page to refresh the timeline
+        window.location.reload();
+      } else {
+        const errorData = await response.json();
+        console.error('Erro ao apagar imagem:', errorData);
+        alert('Ocorreu um erro ao apagar a imagem. Tente novamente.');
+      }
+    } catch (error) {
+      console.error('Erro ao apagar imagem:', error);
+      alert('Ocorreu um erro ao apagar a imagem. Tente novamente.');
+    }
+  };
+
   return (
     <>
       {/* Header */}
@@ -128,7 +168,11 @@ export default function TimelineClient({ timelineData }: TimelineClientProps) {
 
       {/* Renderização condicional do Modal */}
       {selectedItem && (
-        <TimelineModal item={selectedItem} onClose={handleCloseModal} />
+        <TimelineModal 
+          item={selectedItem} 
+          onClose={handleCloseModal}
+          onDelete={handleDelete}
+        />
       )}
     </>
   );
