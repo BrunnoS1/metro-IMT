@@ -6,6 +6,14 @@ import routes from '../../routes';
 import WorksiteSelect from '../components/worksiteselect';
 import { useWorksite } from '../../context/WorksiteContext';
 
+// Utility function to capitalize worksite names (handles composite names)
+const capitalizeWorksite = (name: string) => {
+  if (!name) return '';
+  return name.split(' ').map(word => 
+    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+  ).join(' ');
+};
+
 export default function EnviarFotosPage() {
   const router = useRouter();
   const { selectedWorksite } = useWorksite();
@@ -148,7 +156,7 @@ export default function EnviarFotosPage() {
         <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
           <div className="text-center mb-6">
             <h2 className="text-2xl font-semibold text-[#001489] mb-2">
-              Enviando imagens para {selectedWorksite || '...'}
+              Enviando imagens para {capitalizeWorksite(selectedWorksite) || '...'}
             </h2>
           </div>
 

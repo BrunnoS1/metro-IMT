@@ -12,6 +12,14 @@ interface TimelineClientProps {
   timelineData: TimelineItem[];
 }
 
+// Utility function to capitalize worksite names (handles composite names)
+const capitalizeWorksite = (name: string) => {
+  if (!name) return '';
+  return name.split(' ').map(word => 
+    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+  ).join(' ');
+};
+
 export default function TimelineClient({ timelineData }: TimelineClientProps) {
   const { selectedWorksite } = useWorksite();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -83,7 +91,7 @@ export default function TimelineClient({ timelineData }: TimelineClientProps) {
           <span className="text-white text-3xl">🚇</span>
         </div>
         <h1 className="text-4xl font-bold text-[#001489] mb-2">
-          Linha do Tempo da Obra de {selectedWorksite || '...'}
+          Linha do Tempo da Obra de {capitalizeWorksite(selectedWorksite) || '...'}
         </h1>
         <p className="text-gray-600 text-lg">
           Explore os eventos organizados por data
