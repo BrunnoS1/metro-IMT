@@ -3,4 +3,5 @@ export interface TimelineItem {
   title: string;
   description: string;
   image: string;
+  fotoId: number | null;
 }

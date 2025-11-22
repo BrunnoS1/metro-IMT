@@ -40,18 +40,12 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!rdsConfig.host || !rdsConfig.user || !rdsConfig.password || !rdsConfig.database) {
-      return NextResponse.json(
-        { error: 'Configuração do RDS incompleta.' },
-        { status: 500 }
-      );
-    }
-
     let connection;
 
     try {
       connection = await mysql.createConnection(rdsConfig);
-      // Tenta atualizar pela chave do nome do arquivo
+
+      // Atualiza se já existir
       const [updateResult]: any = await connection.execute(
         `UPDATE fotos
          SET descricao = ?, url_s3 = ?
@@ -63,7 +57,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ message: 'Descrição atualizada com sucesso!' });
       }
 
-      // Se não atualizou nenhuma linha, insere um novo registro
+      // Se não existir, insere
       await connection.execute(
         `INSERT INTO fotos (nome_arquivo, url_s3, descricao)
          VALUES (?, ?, ?)`,
@@ -71,6 +65,7 @@ export async function POST(req: Request) {
       );
 
       return NextResponse.json({ message: 'Descrição salva com sucesso!' });
+
     } catch (error) {
       console.error('Erro ao salvar descrição:', error);
       return NextResponse.json(
@@ -100,27 +95,21 @@ export async function GET(req: Request) {
       );
     }
 
-    if (!rdsConfig.host || !rdsConfig.user || !rdsConfig.password || !rdsConfig.database) {
-      return NextResponse.json(
-        { error: 'Configuração do RDS incompleta.' },
-        { status: 500 }
-      );
-    }
-
     let connection;
 
     try {
       connection = await mysql.createConnection(rdsConfig);
-      
-      // Get all photo descriptions for this worksite by matching exact URLs
+
+      // Agora buscamos o ID também!
       const [rows] = await connection.execute(
-        `SELECT url_s3, descricao 
+        `SELECT id as foto_id, url_s3, descricao 
          FROM fotos 
          WHERE url_s3 LIKE CONCAT('%/obras/', ?, '/fotos/%')`,
         [worksite]
       );
 
       return NextResponse.json(rows);
+
     } catch (error) {
       console.error('Erro ao buscar descrições:', error);
       return NextResponse.json(

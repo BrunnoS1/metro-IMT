@@ -15,11 +15,65 @@ export default function VisualizarBIMPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<IfcViewerAPI | null>(null);
 
+  // Função para extrair todos os pontos 3D do BIM
+  const extractPoints = async () => {
+  const viewer = viewerRef.current;
+
+  if (!viewer) {
+    console.warn("Viewer não carregado ainda.");
+    return;
+  }
+
+  if (!selectedWorksite) {
+    alert("Nenhuma obra selecionada.");
+    return;
+  }
+
+  const scene = viewer.context.getScene();
+  const allPoints: { x: number; y: number; z: number }[] = [];
+
+  scene.traverse((child: any) => {
+    if (child.isMesh && child.geometry?.attributes?.position) {
+      const pos = child.geometry.attributes.position.array;
+
+      for (let i = 0; i < pos.length; i += 3) {
+        allPoints.push({
+          x: pos[i],
+          y: pos[i + 1],
+          z: pos[i + 2],
+        });
+      }
+    }
+  });
+
+  console.log("TOTAL DE PONTOS 3D EXTRAÍDOS:", allPoints.length);
+
+  const resp = await fetch("/api/bim-points", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      worksite: selectedWorksite,
+      points: allPoints,
+    }),
+  });
+
+  const data = await resp.json();
+
+  if (!resp.ok) {
+    console.error("Erro ao salvar pontos 3D:", data);
+    alert("Erro ao salvar pontos 3D (veja o console).");
+    return;
+  }
+
+  alert(`Pontos 3D salvos com sucesso!\nTotal: ${allPoints.length}`);
+  console.log("Metadados salvos:", data);
+};
+
+
   useEffect(() => {
-    // Reset loading state
     setLoading(true);
     setError(null);
-    
+
     const loadBIMModel = async () => {
       if (!selectedWorksite) {
         setLoading(false);
@@ -27,7 +81,6 @@ export default function VisualizarBIMPage() {
       }
 
       try {
-        // Cleanup previous viewer if exists
         if (viewerRef.current) {
           console.log('Disposing previous viewer');
           viewerRef.current.dispose();
@@ -36,20 +89,16 @@ export default function VisualizarBIMPage() {
 
         console.log('Fetching BIM for worksite:', selectedWorksite);
         const response = await fetch(`/api/s3?worksite=${selectedWorksite}&type=bim`);
-        console.log('Fetch completed, parsing JSON...');
         const data = await response.json();
-        console.log('API response for BIM:', data);
 
         if (!response.ok) {
           throw new Error(data.error || 'Erro ao carregar o modelo BIM');
         }
 
         if (!data || data.length === 0) {
-          console.warn('Nenhum modelo BIM encontrado para esta obra:', data);
           throw new Error('Nenhum modelo BIM encontrado para esta obra');
         }
 
-        // Get the first (and should be only) BIM file
         const bimFile = data[0];
         console.log('BIM file URL:', bimFile.url);
 
@@ -57,36 +106,29 @@ export default function VisualizarBIMPage() {
           throw new Error('Container do viewer não encontrado');
         }
 
-        // Create IFC viewer
         const viewer = new IfcViewerAPI({
           container: containerRef.current,
-          backgroundColor: new Color(0x333333), // Dark gray to see if model is there
+          backgroundColor: new Color(0x333333),
         });
         viewerRef.current = viewer;
 
-        // Setup viewer - WASM files must be accessible from the browser
         viewer.axes.setAxes();
         viewer.grid.setGrid();
-        
-        // Add lights to the scene
+
         viewer.context.ifcCamera.cameraControls.setPosition(10, 10, 10);
         viewer.context.ifcCamera.cameraControls.setTarget(0, 0, 0);
-        
-        // WASM files are in the public directory root
+
         viewer.IFC.setWasmPath('/');
 
-        // Load IFC model
         console.log('Loading IFC file from:', bimFile.url);
         const model = await viewer.IFC.loadIfcUrl(bimFile.url);
-        
+
         console.log('IFC model loaded successfully:', model);
         console.log('Model ID:', model.modelID);
-        
-        // Get all spatial structures
+
         const ifcProject = await viewer.IFC.getSpatialStructure(model.modelID);
         console.log('IFC Project structure:', ifcProject);
-        
-        // Try to get all elements using common IFC types
+
         const IFCWALLSTANDARDCASE = 2056796005;
         const IFCWALL = 2391406946;
         const IFCSLAB = 1529196076;
@@ -97,12 +139,12 @@ export default function VisualizarBIMPage() {
         const IFCPLATE = 3171933400;
         const IFCBEAM = 753842376;
         const IFCCOLUMN = 843113511;
-        
+
         const types = [
           IFCWALLSTANDARDCASE, IFCWALL, IFCSLAB, IFCDOOR, IFCWINDOW,
           IFCFURNISHINGELEMENT, IFCMEMBER, IFCPLATE, IFCBEAM, IFCCOLUMN
         ];
-        
+
         let allIDs: number[] = [];
         for (const type of types) {
           const ids = await viewer.IFC.loader.ifcManager.getAllItemsOfType(
@@ -115,10 +157,9 @@ export default function VisualizarBIMPage() {
             allIDs = allIDs.concat(ids);
           }
         }
-        
+
         console.log('Total items found:', allIDs.length);
-        
-        // If we have items, create a subset to render them
+
         if (allIDs.length > 0) {
           const subset = await viewer.IFC.loader.ifcManager.createSubset({
             modelID: model.modelID,
@@ -130,20 +171,20 @@ export default function VisualizarBIMPage() {
         } else {
           console.warn('No geometry found in IFC file!');
         }
-        
+
         console.log('Model children after subset:', model.children);
-        
-        // Fit the model to the viewport
-        console.log('Calling fitToFrame...');
+
         await viewer.context.fitToFrame();
-        
-        // Enable post-processing for better visuals
+
         viewer.context.renderer.postProduction.active = true;
-        
-        // Log camera position
-        console.log('Camera position:', viewer.context.ifcCamera.cameraControls.camera.position);
+
+        console.log(
+          'Camera position:',
+          viewer.context.ifcCamera.cameraControls.camera.position
+        );
+
         console.log('Viewer setup complete');
-        
+
         setLoading(false);
       } catch (error) {
         console.error('Erro ao carregar o modelo:', error);
@@ -154,7 +195,6 @@ export default function VisualizarBIMPage() {
 
     loadBIMModel();
 
-    // Handle window resize
     const handleResize = () => {
       if (viewerRef.current && containerRef.current) {
         const width = containerRef.current.clientWidth;
@@ -166,7 +206,6 @@ export default function VisualizarBIMPage() {
 
     window.addEventListener('resize', handleResize);
 
-    // Cleanup when component unmounts or worksite changes
     return () => {
       window.removeEventListener('resize', handleResize);
       if (viewerRef.current) {
@@ -180,7 +219,7 @@ export default function VisualizarBIMPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
+
         <div className="text-center mb-4">
           <div className="mx-auto h-16 w-16 bg-[#001489] rounded-full flex items-center justify-center mb-3 shadow-lg">
             <span className="text-white text-2xl">🏗️</span>
@@ -189,11 +228,22 @@ export default function VisualizarBIMPage() {
             Visualização do Modelo BIM
           </h1>
           <p className="text-gray-600">
-            {selectedWorksite ? `Visualizando modelo da obra ${selectedWorksite}` : 'Selecione uma obra para visualizar'}
+            {selectedWorksite
+              ? `Visualizando modelo da obra ${selectedWorksite}`
+              : 'Selecione uma obra para visualizar'}
           </p>
         </div>
 
-        {/* Viewer Container */}
+        {/* Novo botão para extrair pontos */}
+        <div className="text-center mb-6">
+          <button
+            onClick={extractPoints}
+            className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors shadow-lg hover:shadow-xl cursor-pointer"
+          >
+            Extrair Pontos 3D
+          </button>
+        </div>
+
         <div className="bg-white rounded-2xl shadow-xl p-4 mb-4">
           <div className="relative w-full h-[450px] overflow-hidden">
             {loading && (
@@ -221,7 +271,6 @@ export default function VisualizarBIMPage() {
           </div>
         </div>
 
-        {/* Navigation */}
         <div className="text-center pb-4">
           <button
             onClick={() => router.push(routes.homePage)}
@@ -230,6 +279,7 @@ export default function VisualizarBIMPage() {
             Voltar para a Página Inicial
           </button>
         </div>
+
       </div>
     </div>
   );

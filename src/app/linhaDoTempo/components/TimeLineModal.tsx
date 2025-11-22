@@ -3,6 +3,7 @@
 import { TimelineItem } from '@/types/types';
 import Image from 'next/image';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface TimelineModalProps {
   item: TimelineItem | null;
@@ -15,6 +16,7 @@ export default function TimelineModal({ item, onClose, onDelete }: TimelineModal
   const [isEditing, setIsEditing] = useState(false);
   const [editedDescription, setEditedDescription] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const router = useRouter();
   
   if (!item) return null;
 
@@ -225,7 +227,19 @@ export default function TimelineModal({ item, onClose, onDelete }: TimelineModal
         </div>
 
         {/* --- FOOTER DO MODAL (Botão de Apagar) --- */}
-        <div className="flex justify-end p-6 border-t border-gray-100 bg-gray-50">
+        <div className="flex flex-col md:flex-row md:justify-between gap-4 p-6 border-t border-gray-100 bg-gray-50">
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={() => {
+                // Encode image URL so we can pass it as query param
+                const encoded = encodeURIComponent(item.image);
+                router.push(`/comparacao?image=${encoded}&fotoId=${item.fotoId}`);
+              }}
+              className="bg-[#001489] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#001367] transition-colors shadow-lg hover:shadow-xl cursor-pointer"
+            >
+              Comparar com BIM
+            </button>
+          </div>
           <button
             onClick={handleDeleteClick}
             disabled={isDeleting}
