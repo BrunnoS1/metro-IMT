@@ -94,10 +94,10 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <Link
               href={routes.linhaDoTempoPage}
-              className="bg-blue-50 p-6 rounded-lg border border-blue-200 block"
+              className="bg-blue-50 p-6 rounded-lg border border-blue-200 block hover:bg-blue-100 transition-colors"
             >
               <h3 className="font-semibold text-[#001489] mb-2">Linha do Tempo</h3>
               <p className="text-sm text-gray-600">Veja a linha do tempo da construção</p>
@@ -105,7 +105,7 @@ export default function HomePage() {
 
             <Link
               href={routes.enviarFotosPage}
-              className="bg-blue-50 p-6 rounded-lg border border-blue-200 block"
+              className="bg-blue-50 p-6 rounded-lg border border-blue-200 block hover:bg-blue-100 transition-colors"
             >
               <h3 className="font-semibold text-[#001489] mb-2">Enviar fotos</h3>
               <p className="text-sm text-gray-600">Escolha a obra e envie fotos da construção por aqui</p>
@@ -113,7 +113,7 @@ export default function HomePage() {
 
             <Link
               href={routes.enviarBIMPage}
-              className="bg-blue-50 p-6 rounded-lg border border-blue-200 block"
+              className="bg-blue-50 p-6 rounded-lg border border-blue-200 block hover:bg-blue-100 transition-colors"
             >
               <h3 className="font-semibold text-[#001489] mb-2">Enviar BIM</h3>
               <p className="text-sm text-gray-600">Envie o projeto BIM da construção</p>

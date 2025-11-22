@@ -48,7 +48,11 @@ export async function POST(req: Request) {
 
     await s3.upload(params).promise();
 
-    return NextResponse.json({ message: 'Imagem enviada com sucesso!' });
+    return NextResponse.json({ 
+      message: 'Imagem enviada com sucesso!',
+      filename: uniqueFileName,
+      key: `obras/${worksite}/${fileType}/${uniqueFileName}`
+    });
   } catch (error) {
     console.error('Erro ao enviar a imagem:', error);
 
@@ -103,6 +107,43 @@ export async function GET(req: Request) {
     const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
     return NextResponse.json(
       { error: 'Erro ao processar requisição.', details: errorMessage },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    const { key } = await req.json();
+
+    if (!key) {
+      return NextResponse.json(
+        { error: 'Chave do arquivo não fornecida.' },
+        { status: 400 }
+      );
+    }
+
+    if (!bucketName) {
+      return NextResponse.json(
+        { error: 'O nome do bucket não está configurado.' },
+        { status: 500 }
+      );
+    }
+
+    const params = {
+      Bucket: bucketName,
+      Key: key,
+    };
+
+    await s3.deleteObject(params).promise();
+
+    return NextResponse.json({ message: 'Imagem apagada com sucesso!' });
+  } catch (error) {
+    console.error('Erro ao apagar imagem:', error);
+
+    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+    return NextResponse.json(
+      { error: 'Erro ao apagar imagem do S3.', details: errorMessage },
       { status: 500 }
     );
   }

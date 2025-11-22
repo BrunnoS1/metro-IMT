@@ -50,6 +50,13 @@ export default function worksiteselect() {
     fetchWorksites();
   }, []);
 
+  // Save selectedWorksite to sessionStorage whenever it changes
+  useEffect(() => {
+    if (selectedWorksite) {
+      sessionStorage.setItem('metro_worksite', selectedWorksite);
+    }
+  }, [selectedWorksite]);
+
   return (
     <div>
       <select
@@ -63,8 +70,10 @@ export default function worksiteselect() {
           {loading ? 'Carregando...' : error ? 'Erro ao carregar' : 'Selecione uma obra'}
         </option>
         {worksites.map((site) => (
-          <option key={site.id} value={site.nome}>
-            {site.nome}
+          <option key={site.id} value={site.nome.toLowerCase()}>
+            {site.nome.split(' ').map(word => 
+              word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            ).join(' ')}
           </option>
         ))}
       </select>

@@ -8,6 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.932.0",
     "@radix-ui/react-select": "^2.2.6",
     "aws-sdk": "^2.1692.0",
     "babel-plugin-react-compiler": "^1.0.0",
