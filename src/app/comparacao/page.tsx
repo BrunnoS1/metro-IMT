@@ -209,7 +209,7 @@ export default function ComparacaoPage() {
 
             <p className="text-xs text-gray-600 mt-2">
               Clique na imagem para adicionar pontos de referência. Os pontos
-              são salvos localmente.
+              são salvos na nuvem.
             </p>
           </div>
 
@@ -277,12 +277,7 @@ export default function ComparacaoPage() {
                 </button>
               </div>
             </div>
-
-            <div className="bg-white rounded shadow p-4 text-xs text-gray-600">
-              Futuro: Associar pontos a elementos do modelo BIM e realizar
-              sobreposição.
-            </div>
-          </div>
+         </div>
         </div>
       )}
     </div>
