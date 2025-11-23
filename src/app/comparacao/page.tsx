@@ -8,6 +8,12 @@ interface Point {
   yPct: number;
 }
 
+interface Anchor3D {
+  x: number;
+  y: number;
+  z: number;
+}
+
 function generateId() {
   return Math.random().toString(36).slice(2, 10);
 }
@@ -35,10 +41,20 @@ export default function ComparacaoPage() {
   const imgRef = useRef<HTMLImageElement | null>(null);
   const [points, setPoints] = useState<Point[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [worksite, setWorksite] = useState<string | null>(null);
+  const [anchors3d, setAnchors3d] = useState<Anchor3D[]>([]);
+  const [loadingAnchors, setLoadingAnchors] = useState(false);
 
   const storageKey = imageUrl
     ? `comparacao_points_${hashImage(imageUrl)}`
     : "comparacao_points";
+
+  useEffect(() => {
+    const storedWorksite = sessionStorage.getItem("metro_worksite");
+    if (storedWorksite) {
+      setWorksite(storedWorksite);
+    }
+  }, []);
 
   useEffect(() => {
     if (!imageUrl) return;
@@ -56,6 +72,33 @@ export default function ComparacaoPage() {
       sessionStorage.setItem(storageKey, JSON.stringify(points));
     } catch {}
   }, [points, storageKey]);
+
+  useEffect(() => {
+    if (!worksite || !fotoId) return;
+
+    const fetchAnchors = async () => {
+      setLoadingAnchors(true);
+      try {
+        const res = await fetch(`/api/ancoras3d?worksite=${worksite}&fotoId=${fotoId}`);
+        if (!res.ok) {
+          setAnchors3d([]);
+          return;
+        }
+        const data = await res.json();
+        if (Array.isArray(data.anchors3d)) {
+          setAnchors3d(data.anchors3d as Anchor3D[]);
+        } else {
+          setAnchors3d([]);
+        }
+      } catch {
+        setAnchors3d([]);
+      } finally {
+        setLoadingAnchors(false);
+      }
+    };
+
+    fetchAnchors();
+  }, [worksite, fotoId]);
 
   function handleImageClick(e: React.MouseEvent) {
     if (!imgRef.current) return;
@@ -94,7 +137,6 @@ export default function ComparacaoPage() {
       return;
     }
 
-    const worksite = sessionStorage.getItem("metro_worksite");
     if (!worksite) {
       alert("Erro: obra não selecionada.");
       return;
@@ -172,15 +214,33 @@ export default function ComparacaoPage() {
           </div>
 
           <div className="w-full lg:w-80 flex flex-col gap-4">
+            <div className="bg-white rounded shadow p-4 flex flex-col gap-2">
+              <h2 className="font-medium">Âncoras 3D selecionadas</h2>
+              {loadingAnchors ? (
+                <div className="text-sm text-gray-500">Carregando âncoras 3D...</div>
+              ) : anchors3d.length === 0 ? (
+                <div className="text-sm text-gray-500">Nenhuma âncora carregada.</div>
+              ) : (
+                <div className="max-h-48 overflow-auto text-sm space-y-1">
+                  {anchors3d.map((a, idx) => (
+                    <div
+                      key={`${a.x}_${a.y}_${a.z}_${idx}`}
+                      className="flex justify-between bg-gray-50 rounded px-2 py-1"
+                    >
+                      <span className="font-semibold">{idx + 1}</span>
+                      <span className="text-gray-700">
+                        x:{a.x.toFixed(2)} y:{a.y.toFixed(2)} z:{a.z.toFixed(2)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             <div className="bg-white rounded shadow p-4 flex flex-col gap-3">
-              <h2 className="font-medium">
-                Pontos Selecionados ({points.length})
-              </h2>
+              <h2 className="font-medium">Pontos Selecionados ({points.length})</h2>
 
               <div className="max-h-64 overflow-auto space-y-2 text-sm">
-                {points.length === 0 && (
-                  <div className="text-gray-500">Nenhum ponto.</div>
-                )}
+                {points.length === 0 && <div className="text-gray-500">Nenhum ponto.</div>}
                 {points.map((p, idx) => (
                   <div
                     key={p.id}

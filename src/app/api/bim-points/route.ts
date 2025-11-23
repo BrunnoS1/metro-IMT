@@ -27,6 +27,48 @@ AWS.config.update({
 const s3 = new AWS.S3();
 const bucketName = process.env.NEXT_PUBLIC_AWS_S3_BUCKET_NAME;
 
+export async function GET(req: Request) {
+  try {
+    const url = new URL(req.url);
+    const worksite = url.searchParams.get("worksite");
+
+    if (!worksite) {
+      return NextResponse.json(
+        { error: "Parâmetro 'worksite' é obrigatório." },
+        { status: 400 }
+      );
+    }
+
+    if (!bucketName) {
+      return NextResponse.json(
+        { error: "Bucket S3 não configurado." },
+        { status: 500 }
+      );
+    }
+
+    const key = `obras/${worksite}/modeloBIM/bim_points.json`;
+
+    const data = await s3
+      .getObject({
+        Bucket: bucketName,
+        Key: key,
+      })
+      .promise();
+
+    const json = JSON.parse(data.Body!.toString("utf-8"));
+    return NextResponse.json({ points: json });
+  } catch (err: any) {
+    if (err?.code === "NoSuchKey" || err?.statusCode === 404) {
+      return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
+    }
+    console.error("Erro no GET /api/bim-points:", err);
+    return NextResponse.json(
+      { error: "Erro ao carregar pontos 3D." },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const { worksite, points } = await req.json();
@@ -108,3 +150,8 @@ export async function POST(req: Request) {
 export const config = {
   runtime: "nodejs",
 };
+
+export async function HEAD(req: Request) {
+  const res = await GET(req);
+  return new NextResponse(null, { status: res.status, headers: res.headers });
+}

@@ -231,9 +231,17 @@ export default function TimelineModal({ item, onClose, onDelete }: TimelineModal
           <div className="flex flex-wrap gap-3">
             <button
               onClick={() => {
-                // Encode image URL so we can pass it as query param
+                const worksite = sessionStorage.getItem('metro_worksite') || '';
+                if (!worksite) {
+                  alert('Selecione uma obra antes de comparar com o BIM.');
+                  return;
+                }
+                if (!item.fotoId) {
+                  alert('Foto inválida para comparação.');
+                  return;
+                }
                 const encoded = encodeURIComponent(item.image);
-                router.push(`/comparacao?image=${encoded}&fotoId=${item.fotoId}`);
+                router.push(`/comparacao/ancoras?image=${encoded}&fotoId=${item.fotoId}&worksite=${worksite}`);
               }}
               className="bg-[#001489] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#001367] transition-colors shadow-lg hover:shadow-xl cursor-pointer"
             >
