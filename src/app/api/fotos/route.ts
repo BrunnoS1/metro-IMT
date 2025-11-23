@@ -16,19 +16,21 @@ const rdsConfig = {
 };
 
 export async function POST(req: Request) {
-  try {
-    const { nome_arquivo, url_s3, descricao } = await req.json();
+  let connection: mysql.Connection | undefined;
 
-    if (!nome_arquivo) {
+  try {
+    const { worksite, nome_arquivo, url_s3, descricao } = await req.json();
+
+    if (!worksite || typeof worksite !== 'string') {
       return NextResponse.json(
-        { error: 'Nome do arquivo é obrigatório.' },
+        { error: 'Worksite é obrigatório.' },
         { status: 400 }
       );
     }
 
-    if (!descricao || descricao.trim().length === 0 || descricao.length > 1000) {
+    if (!nome_arquivo || typeof nome_arquivo !== 'string') {
       return NextResponse.json(
-        { error: 'Descrição deve ter entre 1 e 1000 caracteres.' },
+        { error: 'Nome do arquivo é obrigatório.' },
         { status: 400 }
       );
     }
@@ -40,50 +42,97 @@ export async function POST(req: Request) {
       );
     }
 
-    let connection;
+    if (!descricao || descricao.trim().length === 0 || descricao.length > 1000) {
+      return NextResponse.json(
+        { error: 'Descrição deve ter entre 1 e 1000 caracteres.' },
+        { status: 400 }
+      );
+    }
 
-    try {
-      connection = await mysql.createConnection(rdsConfig);
+    connection = await mysql.createConnection(rdsConfig);
 
-      // Atualiza se já existir
+    // 1) Buscar projeto_id pelo nome da obra
+    const [projetosRows] = await connection.execute(
+      'SELECT id FROM projetos WHERE nome = ? LIMIT 1',
+      [worksite]
+    );
+
+    const projetos = projetosRows as Array<{ id: number }>;
+
+    if (projetos.length === 0) {
+      return NextResponse.json(
+        { error: `Projeto "${worksite}" não encontrado na tabela projetos.` },
+        { status: 400 }
+      );
+    }
+
+    const projeto_id = projetos[0].id;
+
+    // 2) Ver se já existe foto com esse nome + projeto
+    const [fotosRows] = await connection.execute(
+      `SELECT id FROM fotos 
+       WHERE nome_arquivo = ? AND projeto_id = ? 
+       LIMIT 1`,
+      [nome_arquivo, projeto_id]
+    );
+
+    const fotos = fotosRows as Array<{ id: number }>;
+
+    let foto_id: number;
+
+    if (fotos.length > 0) {
+      // 3a) Atualiza foto existente
+      foto_id = fotos[0].id;
+
       const [updateResult]: any = await connection.execute(
         `UPDATE fotos
          SET descricao = ?, url_s3 = ?
-         WHERE nome_arquivo = ?`,
-        [descricao, url_s3, nome_arquivo]
+         WHERE id = ?`,
+        [descricao, url_s3, foto_id]
       );
 
-      if (updateResult.affectedRows && updateResult.affectedRows > 0) {
-        return NextResponse.json({ message: 'Descrição atualizada com sucesso!' });
-      }
+      return NextResponse.json({
+        message: 'Descrição atualizada com sucesso!',
+        foto_id,
+        projeto_id,
+        updated: true,
+      });
 
-      // Se não existir, insere
-      await connection.execute(
-        `INSERT INTO fotos (nome_arquivo, url_s3, descricao)
-         VALUES (?, ?, ?)`,
-        [nome_arquivo, url_s3, descricao]
+    } else {
+      // 3b) Insere nova foto
+      const [insertResult]: any = await connection.execute(
+        `INSERT INTO fotos (projeto_id, nome_arquivo, url_s3, descricao)
+         VALUES (?, ?, ?, ?)`,
+        [projeto_id, nome_arquivo, url_s3, descricao]
       );
 
-      return NextResponse.json({ message: 'Descrição salva com sucesso!' });
+      foto_id = insertResult.insertId;
 
-    } catch (error) {
-      console.error('Erro ao salvar descrição:', error);
-      return NextResponse.json(
-        { error: 'Erro ao salvar descrição.', details: error instanceof Error ? error.message : 'Unknown error' },
-        { status: 500 }
-      );
-    } finally {
-      if (connection) await connection.end();
+      return NextResponse.json({
+        message: 'Descrição salva com sucesso!',
+        foto_id,
+        projeto_id,
+        created: true,
+      });
     }
+
   } catch (error) {
+    console.error('Erro ao salvar descrição:', error);
     return NextResponse.json(
-      { error: 'Erro ao processar requisição.' },
+      {
+        error: 'Erro ao salvar descrição.',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
+  } finally {
+    if (connection) await connection.end();
   }
 }
 
 export async function GET(req: Request) {
+  let connection: mysql.Connection | undefined;
+
   try {
     const url = new URL(req.url);
     const worksite = url.searchParams.get('worksite');
@@ -95,35 +144,27 @@ export async function GET(req: Request) {
       );
     }
 
-    let connection;
+    connection = await mysql.createConnection(rdsConfig);
 
-    try {
-      connection = await mysql.createConnection(rdsConfig);
+    // Opcionalmente poderíamos filtrar por projeto_id,
+    // mas sua lógica atual por url_s3 já funciona bem.
+    const [rows] = await connection.execute(
+      `SELECT id as foto_id, url_s3, descricao 
+       FROM fotos 
+       WHERE url_s3 LIKE CONCAT('%/obras/', ?, '/fotos/%')`,
+      [worksite]
+    );
 
-      // Agora buscamos o ID também!
-      const [rows] = await connection.execute(
-        `SELECT id as foto_id, url_s3, descricao 
-         FROM fotos 
-         WHERE url_s3 LIKE CONCAT('%/obras/', ?, '/fotos/%')`,
-        [worksite]
-      );
+    return NextResponse.json(rows);
 
-      return NextResponse.json(rows);
-
-    } catch (error) {
-      console.error('Erro ao buscar descrições:', error);
-      return NextResponse.json(
-        { error: 'Erro ao buscar descrições.', details: error instanceof Error ? error.message : 'Unknown error' },
-        { status: 500 }
-      );
-    } finally {
-      if (connection) await connection.end();
-    }
   } catch (error) {
+    console.error('Erro ao buscar descrições:', error);
     return NextResponse.json(
-      { error: 'Erro ao processar requisição.' },
+      { error: 'Erro ao buscar descrições.', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
+  } finally {
+    if (connection) await connection.end();
   }
 }
 

@@ -9,7 +9,7 @@ import { useWorksite } from '../../context/WorksiteContext';
 // Utility function to capitalize worksite names (handles composite names)
 const capitalizeWorksite = (name: string) => {
   if (!name) return '';
-  return name.split(' ').map(word => 
+  return name.split(' ').map(word =>
     word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
   ).join(' ');
 };
@@ -31,7 +31,6 @@ export default function EnviarFotosPage() {
 
   const handleOpenCamera = () => {
     alert('Abrindo a câmera do dispositivo...');
-    // Aqui você pode implementar a lógica para abrir a câmera do dispositivo
   };
 
   const handleConfirm = async () => {
@@ -72,7 +71,6 @@ export default function EnviarFotosPage() {
   };
 
   const handleSaveDescription = async () => {
-    // Debug state output
     console.log('[Salvar Descrição] Estado atual:', {
       uploadedFilename,
       uploadedUrl,
@@ -88,7 +86,7 @@ export default function EnviarFotosPage() {
 
     const trimmed = description.trim();
     if (!trimmed) {
-      alert('Por favor, escreva uma descrição (não apenas espaços).');
+      alert('Por favor, escreva uma descrição válida.');
       return;
     }
     if (trimmed.length > 1000) {
@@ -96,10 +94,9 @@ export default function EnviarFotosPage() {
       return;
     }
 
-    // Gerar URL canônica (sem região) para ficar consistente com o padrão salvo no RDS
     const bucket = process.env.NEXT_PUBLIC_AWS_S3_BUCKET_NAME || 'pi-metro-bucket';
     const worksite = selectedWorksite || 'UNKNOWN';
-    // Se o upload não retornou a URL (algum problema), montamos manualmente
+
     const originalUrl = uploadedUrl || `https://${bucket}.s3.amazonaws.com/obras/${worksite}/fotos/${uploadedFilename}`;
     const canonicalUrl = originalUrl.replace(/\.s3\.[a-z0-9-]+\.amazonaws\.com/i, '.s3.amazonaws.com');
 
@@ -112,23 +109,24 @@ export default function EnviarFotosPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          worksite: selectedWorksite,      // <-- ESSENCIAL
           nome_arquivo: uploadedFilename,
           url_s3: canonicalUrl,
           descricao: trimmed,
         }),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
         alert('Descrição salva com sucesso!');
-        // Reset form (mantemos a obra selecionada)
         setImage(null);
         setDescription('');
         setUploadedFilename(null);
         setUploadedUrl(null);
       } else {
-        const errorData = await response.json();
-        console.error('Erro ao salvar descrição:', errorData);
-        alert(errorData.error || 'Ocorreu um erro ao salvar a descrição. Tente novamente.');
+        console.error('Erro ao salvar descrição:', data);
+        alert(data.error || 'Ocorreu um erro ao salvar a descrição. Tente novamente.');
       }
     } catch (error) {
       console.error('Erro ao salvar descrição:', error);
@@ -139,21 +137,17 @@ export default function EnviarFotosPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
+
         <div className="text-center mb-12">
           <div className="mx-auto h-20 w-20 bg-[#001489] rounded-full flex items-center justify-center mb-4 shadow-lg">
             <span className="text-white text-3xl">📷</span>
           </div>
-          <h1 className="text-4xl font-bold text-[#001489] mb-2">
-            Envio de Fotos
-          </h1>
-          <p className="text-gray-600 text-lg">
-            Envie imagens relacionadas à obra selecionada
-          </p>
+          <h1 className="text-4xl font-bold text-[#001489] mb-2">Envio de Fotos</h1>
+          <p className="text-gray-600 text-lg">Envie imagens relacionadas à obra selecionada</p>
         </div>
 
-        {/* Content */}
         <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
+
           <div className="text-center mb-6">
             <h2 className="text-2xl font-semibold text-[#001489] mb-2">
               Enviando imagens para {capitalizeWorksite(selectedWorksite) || '...'}
@@ -162,18 +156,14 @@ export default function EnviarFotosPage() {
 
           <div className="mb-8">
             <div className="flex flex-col items-center gap-3">
-              <label htmlFor="worksite" className="text-lg font-medium text-[#001489]">
-                Selecione a obra:
-              </label>
+              <label className="text-lg font-medium text-[#001489]">Selecione a obra:</label>
               <WorksiteSelect />
             </div>
           </div>
 
           <div className="mb-8">
             <div className="flex flex-col items-center gap-3">
-              <label htmlFor="imageUpload" className="text-lg font-medium text-[#001489]">
-                Adicione uma imagem:
-              </label>
+              <label className="text-lg font-medium text-[#001489]">Adicione uma imagem:</label>
               <div className="flex gap-4">
                 <input
                   id="imageUpload"
@@ -195,11 +185,8 @@ export default function EnviarFotosPage() {
                   Abrir Câmera
                 </button>
               </div>
-              {image && (
-                <p className="text-sm text-gray-600 mt-2">
-                  Imagem selecionada: {image.name}
-                </p>
-              )}
+
+              {image && <p className="text-sm text-gray-600 mt-2">Imagem selecionada: {image.name}</p>}
             </div>
           </div>
 
@@ -208,7 +195,7 @@ export default function EnviarFotosPage() {
               <button
                 onClick={handleConfirm}
                 disabled={isUploading || !image}
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl cursor-pointer disabled:bg-gray-400 disabled:cursor-not-allowed"
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 shadow-lg disabled:bg-gray-400"
               >
                 {isUploading ? 'Enviando...' : 'Confirmar'}
               </button>
@@ -220,27 +207,22 @@ export default function EnviarFotosPage() {
                 </div>
 
                 <div className="mb-4">
-                  <label htmlFor="description" className="block text-lg font-medium text-[#001489] mb-2">
-                    Descrição da Imagem:
-                  </label>
+                  <label className="block text-lg font-medium text-[#001489] mb-2">Descrição da Imagem:</label>
                   <textarea
-                    id="description"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     maxLength={1000}
                     rows={5}
-                    placeholder="Escreva uma descrição para a imagem (máximo 1000 caracteres)..."
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                    placeholder="Escreva uma descrição..."
+                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 resize-none"
                   />
-                  <p className="text-sm text-gray-500 mt-1 text-right">
-                    {description.length}/1000 caracteres
-                  </p>
+                  <p className="text-sm text-gray-500 mt-1 text-right">{description.length}/1000 caracteres</p>
                 </div>
 
                 <button
                   onClick={handleSaveDescription}
                   disabled={!description.trim()}
-                  className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors shadow-lg hover:shadow-xl cursor-pointer disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 shadow-lg disabled:bg-gray-400"
                 >
                   Salvar Descrição
                 </button>
@@ -249,11 +231,12 @@ export default function EnviarFotosPage() {
 
             <button
               onClick={() => router.push(routes.homePage)}
-              className="bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-700 transition-colors shadow-lg hover:shadow-xl cursor-pointer"
+              className="bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-700 shadow-lg"
             >
               Voltar
             </button>
           </div>
+
         </div>
       </div>
     </div>
