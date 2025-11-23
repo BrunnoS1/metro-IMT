@@ -1,11 +1,9 @@
 "use client";
-
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { IfcViewerAPI } from "web-ifc-viewer";
 import { Color, Mesh, MeshBasicMaterial, SphereGeometry } from "three";
 import { useWorksite } from "@/context/WorksiteContext";
-import { useMemo } from "react";
 
 interface BIMPoint {
   x: number;
@@ -33,6 +31,7 @@ export default function Anchors3DPage() {
 
   const imageUrl = params.get("image") || "";
   const fotoId = params.get("fotoId");
+  const readonly = params.get("readonly") === "1";
 
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<IfcViewerAPI | null>(null);
@@ -227,59 +226,72 @@ export default function Anchors3DPage() {
     });
   }, [sampledPoints, anchors]);
 
+  // Enable selection only if not readonly
   useEffect(() => {
+    if (readonly) return;
     const viewer = viewerRef.current;
     if (!viewer) return;
-
     const canvas = viewer.context.getDomElement();
-
     const handleClick = () => {
       const [hit] = viewer.context.castRay(spheresRef.current);
       if (!hit?.object?.userData?.bimPoint) return;
-
       const point = hit.object.userData.bimPoint as BIMPoint;
       const key = keyFromPoint(point);
-
       setAnchors((prev) => {
         const exists = prev.some((p) => keyFromPoint(p) === key);
         return exists ? prev.filter((p) => keyFromPoint(p) !== key) : [...prev, point];
       });
     };
-
     canvas.addEventListener("click", handleClick);
     return () => canvas.removeEventListener("click", handleClick);
-  }, []);
+  }, [readonly]);
+
+  // Fetch saved anchors3d if readonly (mini window) or normal flow with fotoId
+  useEffect(() => {
+    if (!worksite || !fotoId) return;
+    const loadSavedAnchors = async () => {
+      try {
+        const res = await fetch(`/api/ancoras3d?worksite=${worksite}&fotoId=${fotoId}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (Array.isArray(data.anchors3d)) {
+          setAnchors(data.anchors3d as BIMPoint[]);
+        }
+      } catch {}
+    };
+    loadSavedAnchors();
+  }, [worksite, fotoId]);
 
   const confirmAnchors = async () => {
+    if (readonly) return; // no action in readonly mode
     if (!worksite || !fotoId) return;
     if (anchors.length < 3) {
       alert("Selecione pelo menos 3 âncoras.");
       return;
     }
-
     const res = await fetch("/api/ancoras3d", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        worksite,
-        fotoId: Number(fotoId),
-        anchors3d: anchors,
-      }),
+      body: JSON.stringify({ worksite, fotoId: Number(fotoId), anchors3d: anchors }),
     });
-
     if (!res.ok) {
       alert("Erro ao salvar âncoras 3D.");
       return;
     }
-
     router.push(`/comparacao?image=${encodeURIComponent(imageUrl)}&fotoId=${fotoId}`);
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-indigo-100">
       <header className="p-4">
-        <h1 className="text-xl font-bold text-[#001489]">Selecionar Pontos Âncora 3D</h1>
-        <p className="text-gray-600 text-sm">Clique nas esferas vermelhas para escolher os pontos.</p>
+        <h1 className="text-xl font-bold text-[#001489]">
+          {readonly ? "Âncoras 3D Selecionadas" : "Selecionar Pontos Âncora 3D"}
+        </h1>
+        <p className="text-gray-600 text-sm">
+          {readonly
+            ? "Visualização somente leitura das âncoras salvas (verdes)."
+            : "Clique nas esferas vermelhas para escolher os pontos."}
+        </p>
       </header>
 
       <div className="flex-1 p-4">
@@ -304,18 +316,20 @@ export default function Anchors3DPage() {
         )}
       </div>
 
-      <div className="p-4 bg-white shadow flex items-center justify-between">
-        <p className="text-sm text-gray-700">
-          Âncoras selecionadas: <span className="font-semibold">{anchors.length}</span>
-        </p>
-        <button
-          onClick={confirmAnchors}
-          disabled={anchors.length < 3 || !worksite || !fotoId}
-          className="px-4 py-2 bg-[#001489] text-white rounded hover:bg-[#001367] disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Confirmar Âncoras
-        </button>
-      </div>
+      {!readonly && (
+        <div className="p-4 bg-white shadow flex items-center justify-between">
+          <p className="text-sm text-gray-700">
+            Âncoras selecionadas: <span className="font-semibold">{anchors.length}</span>
+          </p>
+          <button
+            onClick={confirmAnchors}
+            disabled={anchors.length < 3 || !worksite || !fotoId}
+            className="px-4 py-2 bg-[#001489] text-white rounded hover:bg-[#001367] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Confirmar Âncoras
+          </button>
+        </div>
+      )}
     </div>
   );
 }

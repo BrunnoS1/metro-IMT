@@ -44,6 +44,7 @@ export default function ComparacaoPage() {
   const [worksite, setWorksite] = useState<string | null>(null);
   const [anchors3d, setAnchors3d] = useState<Anchor3D[]>([]);
   const [loadingAnchors, setLoadingAnchors] = useState(false);
+  const [showMiniAnchors, setShowMiniAnchors] = useState(true);
 
   const storageKey = imageUrl
     ? `comparacao_points_${hashImage(imageUrl)}`
@@ -235,6 +236,12 @@ export default function ComparacaoPage() {
                   ))}
                 </div>
               )}
+              <button
+                onClick={() => setShowMiniAnchors((v) => !v)}
+                className="mt-2 text-xs self-start px-2 py-1 rounded bg-indigo-600 text-white hover:bg-indigo-700 cursor-pointer"
+              >
+                {showMiniAnchors ? "Ocultar janela" : "Mostrar janela"}
+              </button>
             </div>
             <div className="bg-white rounded shadow p-4 flex flex-col gap-3">
               <h2 className="font-medium">Pontos Selecionados ({points.length})</h2>
@@ -263,7 +270,7 @@ export default function ComparacaoPage() {
                 <button
                   onClick={clearAll}
                   disabled={points.length === 0}
-                  className="px-2 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-40"
+                  className="px-2 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-40 cursor-pointer"
                 >
                   Limpar Todos
                 </button>
@@ -271,13 +278,31 @@ export default function ComparacaoPage() {
                 <button
                   onClick={exportJSON}
                   disabled={points.length === 0}
-                  className="px-2 py-1 text-xs rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40"
+                  className="px-2 py-1 text-xs rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 cursor-pointer"
                 >
                   Salvar pontos
                 </button>
               </div>
             </div>
          </div>
+        </div>
+      )}
+      {showMiniAnchors && worksite && fotoId && (
+        <div className="fixed bottom-3 right-3 w-72 h-48 bg-white border rounded shadow-lg overflow-hidden flex flex-col">
+          <div className="flex items-center justify-between bg-indigo-600 text-white px-2 py-1 text-xs">
+            <span>Visão Âncoras 3D</span>
+            <button
+              onClick={() => setShowMiniAnchors(false)}
+              className="text-white/80 hover:text-white"
+            >
+              ×
+            </button>
+          </div>
+          <iframe
+            title="Mini Âncoras 3D"
+            src={`/comparacao/ancoras?readonly=1&worksite=${encodeURIComponent(worksite)}&fotoId=${encodeURIComponent(fotoId)}`}
+            className="flex-1 w-full h-full"
+          />
         </div>
       )}
     </div>
