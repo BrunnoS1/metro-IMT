@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { IfcViewerAPI } from "web-ifc-viewer";
 import { Color, Mesh, MeshBasicMaterial, SphereGeometry } from "three";
 import { useWorksite } from "@/context/WorksiteContext";
+import { useMemo } from "react";
 
 interface BIMPoint {
   x: number;
@@ -45,6 +46,11 @@ export default function Anchors3DPage() {
   const [loadingPoints, setLoadingPoints] = useState(false);
   const [modelError, setModelError] = useState<string | null>(null);
   const [pointsError, setPointsError] = useState<string | null>(null);
+
+  const sampledPoints = useMemo(
+    () => bimPoints.filter((_, idx) => idx % 2 === 0),
+    [bimPoints]
+  );
 
   const keyFromPoint = (p: BIMPoint) => `${p.x}_${p.y}_${p.z}`;
 
@@ -205,13 +211,13 @@ export default function Anchors3DPage() {
     });
     spheresRef.current = [];
 
-    if (!bimPoints.length) return;
+    if (!sampledPoints.length) return;
 
-    const geometry = new SphereGeometry(0.2, 12, 12);
+    const geometry = new SphereGeometry(0.15, 8, 8);
     const baseMaterial = new MeshBasicMaterial({ color: "#ff0000" });
     const selectedMaterial = new MeshBasicMaterial({ color: "#00ff88" });
 
-    bimPoints.forEach((p) => {
+    sampledPoints.forEach((p) => {
       const key = keyFromPoint(p);
       const sphere = new Mesh(geometry, selectedKeys.has(key) ? selectedMaterial : baseMaterial);
       sphere.position.set(p.x, p.y, p.z);
@@ -219,7 +225,7 @@ export default function Anchors3DPage() {
       viewer.context.getScene().add(sphere);
       spheresRef.current.push(sphere);
     });
-  }, [bimPoints, anchors]);
+  }, [sampledPoints, anchors]);
 
   useEffect(() => {
     const viewer = viewerRef.current;
