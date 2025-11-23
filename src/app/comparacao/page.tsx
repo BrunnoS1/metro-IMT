@@ -273,7 +273,7 @@ export default function ComparacaoPage() {
                   disabled={points.length === 0}
                   className="px-2 py-1 text-xs rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40"
                 >
-                  Exportar JSON
+                  Salvar pontos
                 </button>
               </div>
             </div>
