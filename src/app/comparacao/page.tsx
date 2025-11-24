@@ -919,7 +919,7 @@ export default function ComparacaoPage() {
                   onClick={runPythonWireframe}
                   disabled={pyLoading || points.length<3 || anchors3d.length<3 || bimPoints.length===0}
                   className="px-2 py-1 text-xs rounded bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-40 cursor-pointer"
-                >{pyLoading? 'Python...' : 'Wireframe Python'}</button>
+                >{pyLoading? 'Python...' : 'Gerar Wireframe'}</button>
                 {wireframeReady && resultImageUrl && (
                   <a
                     href={resultImageUrl}
