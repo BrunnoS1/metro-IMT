@@ -91,7 +91,14 @@ export async function GET(req: Request) {
       );
     }
 
-    const folder = type === 'bim' ? 'modeloBIM' : 'fotos';
+    let folder: string;
+    if (type === 'bim') {
+      folder = 'modeloBIM';
+    } else if (type === 'wireframe') {
+      folder = 'wireframe';
+    } else {
+      folder = 'fotos';
+    }
     const prefix = `obras/${worksite}/${folder}/`;
 
     const data = await s3

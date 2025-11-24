@@ -74,6 +74,9 @@ export default function ComparacaoPage() {
   const [dimWarning, setDimWarning] = useState<string | null>(null);
   const [mapping, setMapping] = useState<{scale:number;offsetX:number;offsetY:number;boxW:number;boxH:number}|null>(null);
   const [useUnoptimized, setUseUnoptimized] = useState<boolean>(true);
+  // S3 upload para wireframe
+  const [wireframeUploading, setWireframeUploading] = useState(false);
+  const [wireframeUploadedUrl, setWireframeUploadedUrl] = useState<string | null>(null);
   // Apenas uma imagem final (resultado). Removemos a export de âncoras separada.
 
   const POINT_SCHEMA_VERSION = 2;
@@ -556,6 +559,65 @@ export default function ComparacaoPage() {
   // Removidas funções de limpar âncoras/seleção do painel principal.
 
   // ----------------------------------------------------------
+  //      UPLOAD WIREFRAME PARA S3
+  // ----------------------------------------------------------
+  async function uploadWireframeToS3() {
+    if (!pyWireframeImg) {
+      alert('Nenhum wireframe gerado. Execute "Wireframe Python" primeiro.');
+      return;
+    }
+    if (!worksite) {
+      alert('Erro: obra não selecionada.');
+      return;
+    }
+
+    setWireframeUploading(true);
+
+    try {
+      // Convert base64 to blob
+      const base64Data = pyWireframeImg.split(',')[1];
+      const byteCharacters = atob(base64Data);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: 'image/png' });
+
+      // Create unique filename
+      const timestamp = Date.now();
+      const filename = `wireframe_${fotoId || 'image'}_${timestamp}.png`;
+      const file = new File([blob], filename, { type: 'image/png' });
+
+      // Upload to S3
+      const formData = new FormData();
+      formData.append('worksite', worksite);
+      formData.append('file', file);
+      formData.append('type', 'wireframe');
+
+      const response = await fetch('/api/s3', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setWireframeUploadedUrl(data.url);
+        alert(`Wireframe enviado com sucesso para S3!\nURL: ${data.url}`);
+      } else {
+        console.error('Erro ao enviar wireframe:', data);
+        alert('Ocorreu um erro ao enviar o wireframe. Tente novamente.');
+      }
+    } catch (error) {
+      console.error('Erro ao enviar wireframe:', error);
+      alert('Ocorreu um erro ao enviar o wireframe. Tente novamente.');
+    } finally {
+      setWireframeUploading(false);
+    }
+  }
+
+  // ----------------------------------------------------------
   //      SALVAMENTO CORRIGIDO — AGORA ENVIA "foto_id"
   // ----------------------------------------------------------
   async function exportJSON() {
@@ -731,8 +793,8 @@ export default function ComparacaoPage() {
             {/* Python Wireframe Results */}
             { (pyAnchorsImg || pyWireframeImg || pyError) && (
               <div className="mt-4 bg-white p-4 rounded shadow flex flex-col gap-3">
-                <h3 className="text-sm font-bold text-purple-700">🐍 Resultado Python Wireframe</h3>
-                {pyError && <div className="text-xs text-red-600 bg-red-50 p-2 rounded">❌ Erro: {pyError}</div>}
+                <h3 className="text-sm font-bold text-purple-700">Resultado Python Wireframe</h3>
+                {pyError && <div className="text-xs text-red-600 bg-red-50 p-2 rounded">Erro: {pyError}</div>}
                 <div className="grid gap-3 md:grid-cols-2">
                   {pyAnchorsImg && (
                     <div className="flex flex-col gap-1">
@@ -747,9 +809,23 @@ export default function ComparacaoPage() {
                     </div>
                   )}
                 </div>
+                {pyWireframeImg && (
+                  <div className="flex gap-2 items-center">
+                    <button
+                      onClick={uploadWireframeToS3}
+                      disabled={wireframeUploading}
+                      className="px-3 py-2 text-xs rounded bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    >
+                      {wireframeUploading ? 'Enviando para S3...' : 'Enviar Wireframe para S3'}
+                    </button>
+                    {wireframeUploadedUrl && (
+                      <span className="text-xs text-green-700 bg-green-50 px-2 py-1 rounded">Enviado com sucesso</span>
+                    )}
+                  </div>
+                )}
                 {pyStdout && (
                   <details className="text-[10px] text-gray-600 bg-gray-50 p-2 rounded">
-                    <summary className="cursor-pointer font-medium">📋 Ver stdout Python</summary>
+                    <summary className="cursor-pointer font-medium">Ver stdout Python</summary>
                     <pre className="whitespace-pre-wrap mt-2">{pyStdout}</pre>
                   </details>
                 )}
@@ -839,15 +915,6 @@ export default function ComparacaoPage() {
                 >
                   Salvar pontos
                 </button>
-                {!wireframeReady && (
-                  <button
-                    onClick={computeWireframe}
-                    disabled={computing || !opencvLoaded || points.length<3 || anchors3d.length<3 || bimPoints.length===0}
-                    className="px-2 py-1 text-xs rounded bg-yellow-500 text-white hover:bg-yellow-600 disabled:opacity-40 cursor-pointer"
-                  >
-                    {computing? 'Processando...' : opencvLoaded? 'Gerar Wireframe' : 'Carregando OpenCV'}
-                  </button>
-                )}
                 <button
                   onClick={runPythonWireframe}
                   disabled={pyLoading || points.length<3 || anchors3d.length<3 || bimPoints.length===0}

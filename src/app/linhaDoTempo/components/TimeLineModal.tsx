@@ -4,6 +4,7 @@ import { TimelineItem } from '@/types/types';
 import Image from 'next/image';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useWorksite } from '@/context/WorksiteContext';
 
 interface TimelineModalProps {
   item: TimelineItem | null;
@@ -17,6 +18,7 @@ export default function TimelineModal({ item, onClose, onDelete }: TimelineModal
   const [editedDescription, setEditedDescription] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const router = useRouter();
+  const { selectedWorksite } = useWorksite();
   
   if (!item) return null;
 
@@ -45,6 +47,11 @@ export default function TimelineModal({ item, onClose, onDelete }: TimelineModal
       return;
     }
 
+    if (!selectedWorksite) {
+      alert('Selecione uma obra antes de editar a descrição.');
+      return;
+    }
+
     setIsSaving(true);
 
     try {
@@ -62,6 +69,7 @@ export default function TimelineModal({ item, onClose, onDelete }: TimelineModal
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          worksite: selectedWorksite,
           nome_arquivo: filename,
           url_s3: canonicalUrl,
           descricao: editedDescription.trim(),
