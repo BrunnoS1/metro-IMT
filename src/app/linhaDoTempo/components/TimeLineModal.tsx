@@ -218,13 +218,13 @@ export default function TimelineModal({ item, onClose, onDelete }: TimelineModal
 
             {/* Imagem de Referência (lado direito em telas grandes) */}
             <div className="order-1 md:order-2 flex-shrink-0">
-              <div className="relative w-full md:w-56 h-40 rounded-lg overflow-hidden shadow-sm border border-gray-100">
+              <div className="relative w-full md:w-56 h-40 rounded-lg overflow-hidden shadow-sm border border-gray-100 bg-gray-100">
                 <Image
                   src={item.image}
                   alt={`Referência: ${item.title}`}
                   fill
                   sizes="(max-width: 768px) 100vw, 224px"
-                  style={{ objectFit: 'cover' }}
+                  style={{ objectFit: 'contain' }}
                 />
               </div>
               <p className="text-xs text-center text-gray-400 mt-2">

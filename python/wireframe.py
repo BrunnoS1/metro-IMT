@@ -450,7 +450,7 @@ def main():
             cv2.line(bim_overlay, (int(x1), int(y1)), (int(x2), int(y2)), (255, 255, 0), 1)
     cv2.putText(
         bim_overlay,
-        "Wireframe (KNN-light)",
+        "Wireframe",
         (30, 40),
         cv2.FONT_HERSHEY_SIMPLEX,
         1,

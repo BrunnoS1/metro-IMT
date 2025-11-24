@@ -116,7 +116,7 @@ export default function TimelineClient({ timelineData }: TimelineClientProps) {
                 <div className="bg-white rounded-lg shadow-md p-4">
                   {/* <<< ALTERAÇÃO: 'mb-4' removido daqui >>> */}
                   <div
-                    className="aspect-[4/3] relative overflow-hidden rounded-md cursor-pointer hover:opacity-90 transition-opacity"
+                    className="aspect-[4/3] relative overflow-hidden rounded-md cursor-pointer hover:opacity-90 transition-opacity bg-gray-100"
                     onClick={() => handleItemClick(item)}
                   >
                     <Image
@@ -124,8 +124,8 @@ export default function TimelineClient({ timelineData }: TimelineClientProps) {
                       alt={item.title}
                       fill
                       sizes="(max-width: 256px) 100vw, 256px"
-                      style={{ objectFit: 'cover' }}
-                      className="rounded-md"
+                      style={{ objectFit: 'contain' }}
+                      className="rounded-md object-contain"
                     />
                     {/* <<< ALTERAÇÃO: Título e data embutidos na imagem >>> */}
                     <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent text-white rounded-b-md">
