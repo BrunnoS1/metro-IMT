@@ -41,6 +41,10 @@ export default function Anchors3DPage() {
   const [worksite, setWorksite] = useState<string>(params.get("worksite") || selectedWorksite || "");
   const [bimPoints, setBimPoints] = useState<BIMPoint[]>([]);
   const [anchors, setAnchors] = useState<BIMPoint[]>([]);
+    const clearAnchors = () => {
+      setAnchors([]);
+    };
+
   const [loadingModel, setLoadingModel] = useState(false);
   const [loadingPoints, setLoadingPoints] = useState(false);
   const [modelError, setModelError] = useState<string | null>(null);
@@ -283,15 +287,42 @@ export default function Anchors3DPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-indigo-100">
-      <header className="p-4">
-        <h1 className="text-xl font-bold text-[#001489]">
-          {readonly ? "Âncoras 3D Selecionadas" : "Selecionar Pontos Âncora 3D"}
-        </h1>
-        <p className="text-gray-600 text-sm">
-          {readonly
-            ? "Visualização somente leitura das âncoras salvas (verdes)."
-            : "Clique nas esferas vermelhas para escolher os pontos."}
-        </p>
+      <header className="p-4 flex flex-col gap-3">
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-[#001489]">
+              {readonly ? "Âncoras 3D Selecionadas" : "Selecionar Pontos Âncora 3D"}
+            </h1>
+            <p className="text-gray-600 text-sm">
+              {readonly
+                ? "Visualização somente leitura das âncoras salvas (verdes)."
+                : "Clique nas esferas vermelhas para escolher os pontos."}
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 items-end">
+            <div className="flex gap-2">
+              {!readonly && (
+                <button
+                  onClick={clearAnchors}
+                  disabled={anchors.length===0}
+                  className="px-3 py-1 text-xs rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-40"
+                  title="Limpa a seleção atual de âncoras"
+                >Limpar seleção</button>
+              )}
+              <button
+                onClick={()=> router.push('/home')}
+                className="px-3 py-1 text-xs rounded bg-gray-700 text-white hover:bg-gray-800"
+              >Home</button>
+              <button
+                onClick={()=> router.back()}
+                className="px-3 py-1 text-xs rounded bg-gray-300 text-gray-800 hover:bg-gray-400"
+              >Voltar</button>
+            </div>
+            {!readonly && (
+              <p className="text-[11px] text-gray-500">Selecionadas: {anchors.length}</p>
+            )}
+          </div>
+        </div>
       </header>
 
       <div className="flex-1 p-4">
@@ -319,15 +350,20 @@ export default function Anchors3DPage() {
       {!readonly && (
         <div className="p-4 bg-white shadow flex items-center justify-between">
           <p className="text-sm text-gray-700">
-            Âncoras selecionadas: <span className="font-semibold">{anchors.length}</span>
+            Selecionadas: <span className="font-semibold">{anchors.length}</span>
           </p>
-          <button
-            onClick={confirmAnchors}
-            disabled={anchors.length < 3 || !worksite || !fotoId}
-            className="px-4 py-2 bg-[#001489] text-white rounded hover:bg-[#001367] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Confirmar Âncoras
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={clearAnchors}
+              disabled={anchors.length===0}
+              className="px-3 py-2 text-xs rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-40"
+            >Limpar seleção</button>
+            <button
+              onClick={confirmAnchors}
+              disabled={anchors.length < 3 || !worksite || !fotoId}
+              className="px-4 py-2 bg-[#001489] text-white rounded hover:bg-[#001367] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >Confirmar Âncoras</button>
+          </div>
         </div>
       )}
     </div>
